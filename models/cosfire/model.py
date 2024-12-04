@@ -54,8 +54,9 @@ class CosfireNet(nn.Module):
     
 
 def load_model(name, l1_reg, l2_reg, bitsize):
-    """Loads the saved model weights with passed name from
-    saved_weights directory and returns the initialized model
+    """
+    Loads the saved model weights with name from saved_weights directory and 
+    returns the initialized model
 
     Args:
         name: The name of the saved path file (.pth)

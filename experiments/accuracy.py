@@ -1,11 +1,14 @@
 
-from matplotlib import pyplot as plt
+import torch
 import numpy as np
 import pandas as pd
-# from scipy.io import loadmat
 from sklearn.preprocessing import label_binarize
+from sklearn.utils import shuffle
 from torch.utils.data import DataLoader
-import torch
+from fastai.data.all import *
+from fastai.vision.all import *
+from fastai.data.transforms import get_image_files
+from matplotlib import pyplot as plt
 
 from .utils import get_verified_data
 
@@ -174,9 +177,9 @@ def map_at_k_equals_r(tr_df, tst_or_vl_df, thresh):
     return mean_average
 
 
-def run_accuracy_experiment(model, data):
+def evaluate_cosfire_accuracy(model, data):
     """
-    Runs the accuracy experiment on the given model and data.
+    Runs the accuracy experiment on the given cosfire model and data.
 
     Args:
         model: The model to evaluate.
@@ -240,7 +243,7 @@ def run_accuracy_experiment(model, data):
     thresholds = np.arange(-1, 1.2, 0.1)
     mAP_values = []
 
-    for _,threshold in enumerate(thresholds):
+    for _, threshold in enumerate(thresholds):
         mAP_at_threshold = map_at_k_equals_r(
             tr_df = train_df, tst_or_vl_df = test_df,thresh = threshold
         )                                       
@@ -258,3 +261,92 @@ def run_accuracy_experiment(model, data):
     threshold_max_mAP = mAP_and_threshold_df.loc[max_mAP_index, 'threshold']
 
     return max(mAP_values), threshold_max_mAP, predictions
+
+
+def binarize_data(model, data_path):
+
+    files = get_image_files(data_path)
+
+    data_loader = model.dls.test_dl(files)
+
+    # # --- Inspect data shape ---
+    # for batch in data_loader:
+    #     # print("Image tensor shape:", len(batch))
+    #     print(type(batch))
+    #     break
+
+    # preds, _ = model.get_preds(dl=data_loader)
+
+    predictions = []
+    with torch.no_grad():  # Disable gradient calculation for inference
+        for batch in data_loader:
+            images = batch
+            # print("Shape of images:", images.shape)
+            # print("images type:", type(images))
+            # print("images size:", len(images))
+            images = torch.stack([image.data for image in images], dim=0)
+            images = images.squeeze(0)
+            print("new images type:", type(images))
+            print("new images shape", images.shape)
+            # break
+            # outputs = model.model(images)  # Get raw model outputs
+            # predictions.append(outputs)
+
+    # predictions = torch.cat(predictions, dim=0)
+
+    # db_label = np.array([str(files[pth]).split('/')[2] for pth in range(len(files))])
+    # db_label = np.array([dic_labels[lbl] for x, lbl in enumerate(db_label)])
+    
+    # return preds, db_label
+    return 'foo', 'bar'
+
+
+def evaluate_densenet_accuracy(model):
+
+    # preds_train, train_label = binarize_data(
+    #     model = model,
+    #     data_path = './data/train/',
+    # )
+
+    preds_test, test_label = binarize_data(
+        model = model,
+        data_path = './data/test/',
+    )
+
+    # df_training = pd.DataFrame()
+    # df_testing = pd.DataFrame()
+    # flat_predictions_train = []
+    # flat_predictions_test = []
+
+    # for i in range(len(train_label)):
+    #     flat_predictions_train.append(list(np.array(preds_train)[i]))
+
+    # df_training['predictions'] = flat_predictions_train
+    # df_training['label_code'] = train_label
+    # df_training['lable_name'] = df_training['label_code'].map(dic_labels_rev)
+
+    # for i in range(len(test_label)):
+    #     flat_predictions_test.append(list(np.array(preds_test)[i]))
+
+    # df_testing['predictions'] = flat_predictions_test
+    # df_testing['label_code'] = test_label
+    # df_testing['lable_name'] = df_testing['label_code'].map(dic_labels_rev)
+    # df_testing.to_csv('df_testing.csv', index = False)
+    
+    # thresholds_abs_values = np.arange(-1, 1.2, 0.1)
+    # mAP_results_test = []
+    # df_training_shuffled = shuffle(df_training)
+
+    # for _, thresh in enumerate(thresholds_abs_values):
+
+    #     mAP_test_thresh, _, _ = map_values(
+    #         df_training_shuffled, 
+    #         df_testing,
+    #         thresh = thresh, 
+    #         percentile = False,
+    #         topk=100
+    #     )
+
+    #     mAP_results_test.append(mAP_test_thresh)
+
+    # return mAP_results_test

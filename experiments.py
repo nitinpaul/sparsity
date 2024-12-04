@@ -7,7 +7,9 @@ import torch
 
 from models.cosfire import data as cosfire_data
 from models.cosfire.model import load_model as load_cosfire_model
-from experiments.accuracy import run_accuracy_experiment
+from models.densenet.model import load_model as load_densenet_model
+from experiments.accuracy import evaluate_cosfire_accuracy
+from experiments.accuracy import evaluate_densenet_accuracy
 from experiments.hamming_weight import calculate_average_hamming_weight
 from experiments.sparsity_ratio import calculate_average_sparsity_ratio
 from experiments.sparsity_distribution import visualize_sparsity_distribution
@@ -51,14 +53,14 @@ def accuracy(model_name):
     slices = model_name.split('_')
     model_type = slices[0]
     bitsize = int(slices[1].replace('bit', ''))
-    model_weights_file = model_name + '.pth'
+    model_weights_filename = model_name + '.pth'
 
     if model_type == 'cosfire':
 
         model = load_cosfire_model(
-            name=model_weights_file, bitsize=bitsize, l1_reg=1e-08, l2_reg=1e-08
+            name=model_weights_filename, bitsize=bitsize, l1_reg=1e-08, l2_reg=1e-08
         )
-        mAP, threshold_max_mAP, predictions = run_accuracy_experiment(
+        mAP, threshold_max_mAP, predictions = evaluate_cosfire_accuracy(
             model, cosfire_data
         )
 
@@ -70,6 +72,11 @@ def accuracy(model_name):
 
         # Write predictions to file
         predictions.to_csv(predictions_dir + model_name + '.csv', index=False)
+
+    elif model_type == 'densenet':
+    
+        model = load_densenet_model(model_weights_filename, bitsize)
+        mAP = evaluate_densenet_accuracy(model)
 
 
 # -------------------------------------
@@ -108,6 +115,8 @@ def sparsity_ratio(model_name):
     
     visualize_sparsity_distribution(model_name)
 
+
+# CLI Config
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script to run the experiments")
