@@ -52,6 +52,7 @@ data_path = Path(hyper_params["dataset"])
 output_dir = './output/'
 predictions_dir = './predictions/'
 binaries_dir = './binaries/'
+figures_dir = './figures/'
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -74,8 +75,6 @@ data_block = DataBlock(
     item_tfms=Resize(224),
     get_y = parent_label
 )
-
-data = data_block.dataloaders(data_path)
 
 
 def generate_predictions(model, file_path, dic_labels):
@@ -246,7 +245,9 @@ def DSHLoss(output, target, alpha = 0.00001, margin=36):
     return minibatch_loss
 
 
-def run(bitsize=72, learning_rate=1e-3, model_name='densenet_72bit_lr0p001', save_mode=False):
+def run(bitsize=72, learning_rate=1e-3, model_name='densenet_72bit_lr0p001', save_model=False):
+
+    data = data_block.dataloaders(data_path)
 
     model = vision_learner(
         data,
@@ -340,7 +341,7 @@ def run(bitsize=72, learning_rate=1e-3, model_name='densenet_72bit_lr0p001', sav
     plt.xlabel('Threshold')
     plt.ylabel('mAP')
     plt.legend()
-    plt.savefig(output_dir + model_name + '_maps_curves.png')
+    plt.savefig(figures_dir + model_name + '_maps_curves.png')
     plt.close()
 
     # Find the index of the maximum mAP value
@@ -377,9 +378,9 @@ def run(bitsize=72, learning_rate=1e-3, model_name='densenet_72bit_lr0p001', sav
 
 if __name__ == '__main__':
 
-    bitsizes = [72]
+    bitsizes = [48, 56, 64, 80]
 
     for bitsize in bitsizes:
-        run(bitsize=72, 
+        run(bitsize=bitsize, 
             learning_rate=1e-3, 
             model_name='densenet_' + str(bitsize) + 'bit_lr0p001')
