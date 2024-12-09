@@ -13,7 +13,8 @@ from experiments.accuracy import evaluate_densenet_accuracy
 from experiments.hamming_weight import calculate_average_hamming_weight
 from experiments.sparsity_ratio import calculate_average_sparsity_ratio
 from experiments.sparsity_distribution import visualize_sparsity_distribution
-from experiments.utils import binarize_predictions
+from experiments.utils import binarize_cosfire_predictions
+from experiments.utils import binarize_densenet_predictions
 
 
 # Reproducibility settings
@@ -160,7 +161,10 @@ if __name__ == "__main__":
     if args.command == 'accuracy':
         accuracy(args.model_name)
     elif args.command == 'binarize':
-        binarize_predictions(args.model_name, args.threshold)
+        if args.model_name.split('_')[0] == 'cosfire':
+            binarize_cosfire_predictions(args.model_name, args.threshold)
+        else:
+            binarize_densenet_predictions(args.model_name, args.threshold)
     elif args.command == 'hamming-weight':
         hamming_weight(args.model_name)
     elif args.command == 'sparsity-ratio':

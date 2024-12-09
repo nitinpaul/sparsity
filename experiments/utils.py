@@ -68,8 +68,9 @@ def get_verified_data(data_path, data_path_valid, data_path_test, dic_labels):
     return train_df, valid_df, test_df
 
 
-def binarize_predictions(model_name, threshold):
-    """Binarizes predictions from a CSV file and saves the results.
+def binarize_cosfire_predictions(model_name, threshold):
+    """
+    Binarizes cosfire predictions and saves the results.
 
     Reads a CSV file containing predictions and labels, binarizes the
     predictions based on a given threshold, and saves the binarized
@@ -118,6 +119,61 @@ def binarize_predictions(model_name, threshold):
                 1 if val >= threshold else 0 for val in predictions_list
             ]
             writer.writerow([binarized_predictions, row[1]])
+
+            num_rows_processed += 1
+
+    print(f"Binarized {num_rows_processed} rows.")
+    print(f"Binarized predictions saved to: {binaries_file}")
+
+
+def binarize_densenet_predictions(model_name, threshold):
+    """
+    Binarizes cosfire predictions and saves the results.
+
+    Reads a CSV file containing predictions and labels, binarizes the
+    predictions based on a given threshold, and saves the binarized
+    predictions along with the labels to a new CSV file.
+
+    Args:
+        model_name (str): The name of the model, used for file naming.
+        threshold (float): The threshold value for binarization.
+            Values greater than or equal to the threshold are set to 1,
+            while values less than the threshold are set to 0.
+    """
+
+    predictions_dir = './predictions/'
+    binaries_dir = './binaries/'
+
+    predictions_file = predictions_dir + model_name + '.csv'
+    binaries_file = binaries_dir + model_name + '.csv'
+
+    print(f"Reading predictions from: {predictions_file}")
+
+    with open(predictions_file, 'r') as predictions, open(
+            binaries_file, 'w', newline='') as binaries:
+        reader = csv.reader(predictions)
+        writer = csv.writer(binaries)
+
+        # Write header to the output file
+        header = next(reader)
+        header[2] = 'label_name'  # Correct the column name
+        writer.writerow(['predictions', 'label_name'])
+
+        num_rows_processed = 0
+
+        for row in reader:
+            predictions_str = row[0]
+
+            # Convert the string representation of the list to a numpy array
+            predictions_arr = np.array(eval(predictions_str))
+
+            # Binarize the predictions
+            binarized_predictions = [
+                1 if val >= threshold else 0 for val in predictions_arr
+            ]
+
+            # Write the binarized predictions and label name to the output file
+            writer.writerow([binarized_predictions, row[2]]) 
 
             num_rows_processed += 1
 
