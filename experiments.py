@@ -109,7 +109,7 @@ def sparsity_ratio(model_name):
 
 
 # -------------------------------------
-# EXPERIMENT 4: Sparsity Ratio  
+# EXPERIMENT 5: Sparsity Distribution 
 # -------------------------------------
 
 def sparsity_ratio(model_name):
