@@ -112,9 +112,10 @@ def sparsity_ratio(model_name):
 # EXPERIMENT 5: Sparsity Distribution 
 # -------------------------------------
 
-def sparsity_ratio(model_name):
+# def sparsity_distribution(model_name):
+#     print("Correct function")
     
-    visualize_sparsity_distribution(model_name)
+#     visualize_sparsity_distribution(model_name)
 
 
 # CLI Config
@@ -170,4 +171,4 @@ if __name__ == "__main__":
     elif args.command == 'sparsity-ratio':
         sparsity_ratio(args.model_name)
     elif args.command == 'sparsity-distribution':
-        visualize_sparsity_distribution(args.model_name)
+        visualize_sparsity_distribution(args.model_name, None)
