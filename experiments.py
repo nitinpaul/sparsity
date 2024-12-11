@@ -15,6 +15,8 @@ from experiments.sparsity_ratio import calculate_average_sparsity_ratio
 from experiments.sparsity_distribution import visualize_sparsity_distribution
 from experiments.utils import binarize_cosfire_predictions
 from experiments.utils import binarize_densenet_predictions
+from experiments.utils import generate_binary_file
+from experiments.storage import calculate_entropy
 
 
 # Reproducibility settings
@@ -109,13 +111,17 @@ def sparsity_ratio(model_name):
 
 
 # -------------------------------------
-# EXPERIMENT 5: Sparsity Distribution 
+# EXPERIMENT 9: Data Compression 
 # -------------------------------------
 
-# def sparsity_distribution(model_name):
-#     print("Correct function")
-    
-#     visualize_sparsity_distribution(model_name)
+def print_entropy(binary_filename):
+
+    entropy_value = calculate_entropy(binary_filename)
+
+    print("---------------------------------------")
+    print("Model name: " + binary_filename)
+    print("Entropy:", entropy_value)
+    print("---------------------------------------")
 
 
 # CLI Config
@@ -124,7 +130,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script to run the experiments")
     subparsers = parser.add_subparsers(dest="command")
 
-    # Subparser for binarize function
+    # Subparser for binarize utility
     accuracy_parser = subparsers.add_parser("binarize")
     accuracy_parser.add_argument(
         "model_name", type=str, help="The name of the model to binarize the predictions for"
@@ -157,6 +163,18 @@ if __name__ == "__main__":
         "model_name", type=str, help="The name of the model weights pth file"
     )
 
+    # Subparser for the binary file generation utility
+    accuracy_parser = subparsers.add_parser("generate-binary")
+    accuracy_parser.add_argument(
+        "csv_filename", type=str, help="The name of the csv file with binarized predictions"
+    )
+
+    # Subparser for the entropy calculation (storage requirements experiment)
+    accuracy_parser = subparsers.add_parser("entropy")
+    accuracy_parser.add_argument(
+        "binary_filename", type=str, help="The name of the binary (.bin) file with binarized predictions"
+    )
+
     args = parser.parse_args()
 
     if args.command == 'accuracy':
@@ -166,6 +184,10 @@ if __name__ == "__main__":
             binarize_cosfire_predictions(args.model_name, args.threshold)
         else:
             binarize_densenet_predictions(args.model_name, args.threshold)
+    elif args.command == 'generate-binary':
+        generate_binary_file(args.csv_filename)
+    elif args.command == 'entropy':
+        print_entropy(args.binary_filename)
     elif args.command == 'hamming-weight':
         hamming_weight(args.model_name)
     elif args.command == 'sparsity-ratio':
