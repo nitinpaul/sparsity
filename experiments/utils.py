@@ -179,3 +179,28 @@ def binarize_densenet_predictions(model_name, threshold):
 
     print(f"Binarized {num_rows_processed} rows.")
     print(f"Binarized predictions saved to: {binaries_file}")
+
+
+def generate_binary_file(csv_filename):
+    """
+    Converts binary code predictions from a CSV file to a pure binary format.
+
+    Args:
+        csv_file: Path to the input CSV file.
+    """
+
+    binaries_dir = './binaries/'
+
+    # Read the CSV file using pandas, only loading the 'predictions' column
+    df = pd.read_csv(binaries_dir + csv_filename + '.csv', usecols=['predictions'])
+
+    # Convert the string representation of binary codes to NumPy arrays
+    binary_codes = df['predictions'].apply(lambda x: np.fromstring(x[1:-1], dtype=np.uint8, sep=', '))
+
+    # Stack the arrays into a single NumPy array
+    binary_codes = np.vstack(binary_codes)
+
+    # Save the NumPy array as a binary file
+    binary_codes.tofile(binaries_dir + csv_filename + '.bin')
+
+
