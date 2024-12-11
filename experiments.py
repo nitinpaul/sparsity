@@ -17,6 +17,7 @@ from experiments.utils import binarize_cosfire_predictions
 from experiments.utils import binarize_densenet_predictions
 from experiments.utils import generate_binary_file
 from experiments.storage import calculate_entropy
+from experiments.storage import compress_binary_file
 
 
 # Reproducibility settings
@@ -33,7 +34,6 @@ if torch.cuda.is_available():
 
 # Predictions directory
 predictions_dir = './predictions/'
-
 
 # -------------------------------------
 # EXPERIMENT 1: Accuracy
@@ -124,6 +124,17 @@ def print_entropy(binary_filename):
     print("---------------------------------------")
 
 
+def print_compression_ration(binary_filename, compression_method):
+
+    compression_ratio, space_savings = compress_binary_file(binary_filename, compression_method)
+
+    print("---------------------------------------")
+    print("Model name: " + binary_filename)
+    print("Compression Ratio:", compression_ratio)
+    print("Space Savings:", space_savings)
+    print("---------------------------------------")
+
+
 # CLI Config
 
 if __name__ == "__main__":
@@ -175,6 +186,15 @@ if __name__ == "__main__":
         "binary_filename", type=str, help="The name of the binary (.bin) file with binarized predictions"
     )
 
+    # Subparser for the compression ratio functionality (storage requirements experiment)
+    accuracy_parser = subparsers.add_parser("compress")
+    accuracy_parser.add_argument(
+        "binary_filename", type=str, help="The name of the binary (.bin) file with binarized predictions"
+    )
+    accuracy_parser.add_argument(
+        "compression_method", type=str, help="The name of the compression method to apply ('rle', 'huffman' or 'zlib')"
+    )
+
     args = parser.parse_args()
 
     if args.command == 'accuracy':
@@ -184,13 +204,15 @@ if __name__ == "__main__":
             binarize_cosfire_predictions(args.model_name, args.threshold)
         else:
             binarize_densenet_predictions(args.model_name, args.threshold)
-    elif args.command == 'generate-binary':
-        generate_binary_file(args.csv_filename)
-    elif args.command == 'entropy':
-        print_entropy(args.binary_filename)
     elif args.command == 'hamming-weight':
         hamming_weight(args.model_name)
     elif args.command == 'sparsity-ratio':
         sparsity_ratio(args.model_name)
     elif args.command == 'sparsity-distribution':
         visualize_sparsity_distribution(args.model_name, None)
+    elif args.command == 'generate-binary':
+        generate_binary_file(args.csv_filename)
+    elif args.command == 'entropy':
+        print_entropy(args.binary_filename)
+    elif args.command == 'compress':
+        print_compression_ration(args.binary_filename, args.compression_method)
