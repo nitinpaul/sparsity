@@ -69,7 +69,7 @@ torch.backends.cudnn.benchmark = False
 
 # pre-process and load the data
 data_block = DataBlock(
-    blocks = (ImageBlock,CategoryBlock),
+    blocks = (ImageBlock, CategoryBlock),
     get_items = get_image_files,
     splitter = GrandparentSplitter(),
     item_tfms=Resize(224),
@@ -81,7 +81,7 @@ def generate_predictions(model, file_path, dic_labels):
 
     files = get_image_files(file_path)
     train_dl = model.dls.test_dl(files)
-    preds,y = model.get_preds(dl=train_dl)
+    preds, _ = model.get_preds(dl=train_dl)
     db_label = np.array([str(files[pth]).split('/')[4] for pth in range(len(files))])
     db_label = np.array([dic_labels[lbl] for x, lbl in enumerate(db_label)])
     
@@ -276,6 +276,56 @@ def run(bitsize=72, learning_rate=1e-3, model_name='densenet_72bit_lr0p001', sav
     # plt.savefig(output_dir + "Densenet_Train_and_Test_Loss_curve_at_freeze.png")
     # plt.close()
 
+    # Experiment 5 code begins
+    
+    import time
+
+    def measure_hashing_time(model, dataloader):
+        """
+        Measures the average hashing time for a given model and dataloader.
+
+        Args:
+            model: The trained deep hashing model.
+            dataloader: The dataloader for the test dataset.
+
+        Returns:
+            float: The average hashing time in seconds.
+        """
+
+        total_time = 0
+        total_samples = 0
+
+        with torch.no_grad():
+            for batch in dataloader:
+                images, _ = batch
+                images = images.to(device)
+
+                start_time = time.time()
+                _ = model.model(images)  # Generate hash codes
+                end_time = time.time()
+
+                total_time += (end_time - start_time)
+                total_samples += len(images)
+
+        avg_hashing_time = total_time / total_samples
+        return avg_hashing_time
+
+    # Create a dataloader for the test dataset
+    test_files = get_image_files('../../data/test/')
+    test_dl = model.dls.test_dl(test_files)
+
+    # Measure the hashing time
+    avg_hashing_time = measure_hashing_time(model, test_dl)
+
+    # Print the average hashing time
+    print(f"Average Hashing Time: {avg_hashing_time:.4f} seconds")
+
+    # Write the hashing time to a text file
+    with open("hashing_time.txt", "w") as f:
+        f.write(f"Average Hashing Time: {avg_hashing_time:.4f} seconds")
+
+    # Experiment code ends
+
     if save_model:
 
         # save the Learner object
@@ -378,7 +428,7 @@ def run(bitsize=72, learning_rate=1e-3, model_name='densenet_72bit_lr0p001', sav
 
 if __name__ == '__main__':
 
-    bitsizes = [48, 56, 64, 80]
+    bitsizes = [56, 72]
 
     for bitsize in bitsizes:
         run(bitsize=bitsize, 

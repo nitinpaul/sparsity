@@ -117,7 +117,7 @@ def print_entropy(binary_filename):
     print("---------------------------------------")
 
 
-def print_compression_ration(binary_filename, compression_method):
+def print_compression_ratio(binary_filename, compression_method):
 
     compression_ratio, space_savings = compress_binary_file(binary_filename, compression_method)
 
@@ -208,4 +208,4 @@ if __name__ == "__main__":
     elif args.command == 'entropy':
         print_entropy(args.binary_filename)
     elif args.command == 'compress':
-        print_compression_ration(args.binary_filename, args.compression_method)
+        print_compression_ratio(args.binary_filename, args.compression_method)
