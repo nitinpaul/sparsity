@@ -1,0 +1,7 @@
+Average Hashing Time per Image: 0.00106079 seconds
+Standard Deviation across runs: 0.00000456 seconds
+Bitsize: 72
+Number of test images: 404
+Batch size: 32
+Device: cuda
+Timed runs: 7

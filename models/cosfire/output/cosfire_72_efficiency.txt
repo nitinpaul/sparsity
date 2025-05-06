@@ -1,0 +1,20 @@
+Model: CosfireNet
+Device: cuda
+Number of test images: 404
+Batch size: 32
+Number of warm-up runs: 3
+Number of timed runs: 7
+------------------------------
+Warm-up Run 1/3 | Avg Time/Image: 0.00128951 sec | Total Run Time: 0.5245 sec
+Warm-up Run 2/3 | Avg Time/Image: 0.00002982 sec | Total Run Time: 0.0150 sec
+Warm-up Run 3/3 | Avg Time/Image: 0.00003043 sec | Total Run Time: 0.0155 sec
+Run 1/7 | Avg Time/Image: 0.00002943 sec | Total Run Time: 0.0149 sec
+Run 2/7 | Avg Time/Image: 0.00003025 sec | Total Run Time: 0.0153 sec
+Run 3/7 | Avg Time/Image: 0.00003091 sec | Total Run Time: 0.0156 sec
+Run 4/7 | Avg Time/Image: 0.00003038 sec | Total Run Time: 0.0153 sec
+Run 5/7 | Avg Time/Image: 0.00002995 sec | Total Run Time: 0.0151 sec
+Run 6/7 | Avg Time/Image: 0.00003032 sec | Total Run Time: 0.0153 sec
+Run 7/7 | Avg Time/Image: 0.00003042 sec | Total Run Time: 0.0154 sec
+------------------------------
+Final Average Hashing Time per Image: 0.00003024 seconds
+Standard Deviation across runs:       0.00000042 seconds

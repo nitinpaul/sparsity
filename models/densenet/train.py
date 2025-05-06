@@ -276,55 +276,160 @@ def run(bitsize=72, learning_rate=1e-3, model_name='densenet_72bit_lr0p001', sav
     # plt.savefig(output_dir + "Densenet_Train_and_Test_Loss_curve_at_freeze.png")
     # plt.close()
 
-    # Experiment 5 code begins
-    
-    import time
+    # --- Experiment 5 code begins ---
+    # This section is updated to match the COSFIRE experiment methodology.
 
-    def measure_hashing_time(model, dataloader):
-        """
-        Measures the average hashing time for a given model and dataloader.
-
-        Args:
-            model: The trained deep hashing model.
-            dataloader: The dataloader for the test dataset.
-
-        Returns:
-            float: The average hashing time in seconds.
-        """
-
-        total_time = 0
-        total_samples = 0
-
-        with torch.no_grad():
-            for batch in dataloader:
-                images, _ = batch
-                images = images.to(device)
-
-                start_time = time.time()
-                _ = model.model(images)  # Generate hash codes
-                end_time = time.time()
-
-                total_time += (end_time - start_time)
-                total_samples += len(images)
-
-        avg_hashing_time = total_time / total_samples
-        return avg_hashing_time
+    pytorch_model = model.model
+    pytorch_model.eval()
+    pytorch_model.to(device)
 
     # Create a dataloader for the test dataset
-    test_files = get_image_files('../../data/test/')
-    test_dl = model.dls.test_dl(test_files)
+    test_files = get_image_files(data_path/'test/')
 
-    # Measure the hashing time
-    avg_hashing_time = measure_hashing_time(model, test_dl)
+    if not test_files:
+        print("Error: No test files found. Skipping Hashing Time experiment.")
+    else:
+        test_dl = model.dls.test_dl(test_files, bs=32)
+        num_images = len(test_dl.dataset)
 
-    # Print the average hashing time
-    print(f"Average Hashing Time: {avg_hashing_time:.4f} seconds")
+        if num_images == 0:
+            print("Error: Test dataset is empty. Skipping Hashing Time experiment.")
+        else:
+            num_exp_runs = 7  # Number of times to repeat the experiment for averaging
+            num_exp_warmup = 3 # Number of initial runs to discard for warm-up
+            run_avg_times = []
 
-    # Write the hashing time to a text file
-    with open("hashing_time.txt", "w") as f:
-        f.write(f"Average Hashing Time: {avg_hashing_time:.4f} seconds")
+            with torch.no_grad():
+                    
+                    for run_idx in range(num_exp_runs + num_exp_warmup):
 
-    # Experiment code ends
+                        batch_processing_times = []
+                        total_images_processed_run = 0
+
+                        if device.type == 'cuda':
+                            torch.cuda.synchronize()
+
+                        start_time_run_total = time.perf_counter()
+
+                        for test_images_batch in test_dl:
+
+                            images = test_images_batch[0]
+                            images = images.to(device)
+                            current_batch_size = images.size(0)
+                            total_images_processed_run += current_batch_size
+
+                            if device.type == 'cuda':
+                                torch.cuda.synchronize()
+
+                            start_time_batch = time.perf_counter()
+
+                            # --- Hashing Operation ---
+                            _ = pytorch_model(images) # Perform the forward pass
+                            # --- End Hashing Operation ---
+
+                            if device.type == 'cuda':
+                                torch.cuda.synchronize()
+
+                            end_time_batch = time.perf_counter()
+                            batch_processing_times.append(end_time_batch - start_time_batch)
+
+                        if device.type == 'cuda':
+                            torch.cuda.synchronize()
+
+                        end_time_run_total = time.perf_counter()
+                        total_run_processing_time = sum(batch_processing_times) # Sum of only batch processing times
+                        total_run_wall_time = end_time_run_total - start_time_run_total # Overall wall time for the run
+
+                        if total_images_processed_run > 0:
+                            avg_time_per_image_run = total_run_processing_time / total_images_processed_run
+                        else:
+                            avg_time_per_image_run = 0
+
+                        if run_idx >= num_exp_warmup:
+                            run_avg_times.append(avg_time_per_image_run)
+                            print(f"Run {run_idx - num_exp_warmup + 1}/{num_exp_runs} | Avg Time/Image: {avg_time_per_image_run:.8f} sec | Total Run Proc. Time: {total_run_processing_time:.4f} sec")
+                        else:
+                            print(f"Warm-up Run {run_idx + 1}/{num_exp_warmup} | Avg Time/Image: {avg_time_per_image_run:.8f} sec | Total Run Proc. Time: {total_run_processing_time:.4f} sec")
+
+            # Calculate the final average and standard deviation
+            if run_avg_times:
+                final_avg_hashing_time = np.mean(run_avg_times)
+                std_dev_hashing_time = np.std(run_avg_times)
+            else:
+                print("Error: No timed runs were completed for Hashing Time experiment.")
+                final_avg_hashing_time = None
+                std_dev_hashing_time = None
+
+            print("-" * 30)
+            output_file_path = Path(output_dir) / f"{model_name}_hashing_time.txt" # Using model_name from run args
+            output_file_path.parent.mkdir(parents=True, exist_ok=True) # Ensure output_dir exists
+
+            if final_avg_hashing_time is not None:
+                result_string = (
+                    f"Average Hashing Time per Image: {final_avg_hashing_time:.8f} seconds\n"
+                    f"Standard Deviation across runs: {std_dev_hashing_time:.8f} seconds\n"
+                    f"Bitsize: {bitsize}\n"
+                    f"Number of test images: {num_images}\n"
+                    f"Batch size: {test_dl.bs}\n"
+                    f"Device: {device}\n"
+                    f"Timed runs: {num_exp_runs}\n"
+                )
+                print(f"Final Average Hashing Time per Image (DenseNet {bitsize}-bit): {final_avg_hashing_time:.8f} seconds")
+                print(f"Standard Deviation across runs (DenseNet {bitsize}-bit): {std_dev_hashing_time:.8f} seconds")
+                with open(output_file_path, "w") as f:
+                    f.write(result_string)
+                print(f"Hashing time results saved to: {output_file_path}")
+            else:
+                print("Hashing time calculation failed.")
+            print("--- Experiment 5 Finished for DenseNet ---")
+
+    # import time
+
+    # def measure_hashing_time(model, dataloader):
+    #     """
+    #     Measures the average hashing time for a given model and dataloader.
+
+    #     Args:
+    #         model: The trained deep hashing model.
+    #         dataloader: The dataloader for the test dataset.
+
+    #     Returns:
+    #         float: The average hashing time in seconds.
+    #     """
+
+    #     total_time = 0
+    #     total_samples = 0
+
+    #     with torch.no_grad():
+    #         for batch in dataloader:
+    #             images, _ = batch
+    #             images = images.to(device)
+
+    #             start_time = time.time()
+    #             _ = model.model(images)  # Generate hash codes
+    #             end_time = time.time()
+
+    #             total_time += (end_time - start_time)
+    #             total_samples += len(images)
+
+    #     avg_hashing_time = total_time / total_samples
+    #     return avg_hashing_time
+
+    # # Create a dataloader for the test dataset
+    # test_files = get_image_files('../../data/test/')
+    # test_dl = model.dls.test_dl(test_files)
+
+    # # Measure the hashing time
+    # avg_hashing_time = measure_hashing_time(model, test_dl)
+
+    # # Print the average hashing time
+    # print(f"Average Hashing Time: {avg_hashing_time:.4f} seconds")
+
+    # # Write the hashing time to a text file
+    # with open("hashing_time.txt", "w") as f:
+    #     f.write(f"Average Hashing Time: {avg_hashing_time:.4f} seconds")
+
+    # Experiment 5 code ends
 
     if save_model:
 

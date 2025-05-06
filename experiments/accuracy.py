@@ -222,7 +222,7 @@ def evaluate_cosfire_accuracy(model, data):
             train_outputs, _ = model(train_inputs)
             predictions_train.append(train_outputs.numpy())
         
-        for i, (test_inputs, _) in enumerate(test_dataloader):
+        for _, (test_inputs, _) in enumerate(test_dataloader):
             test_outputs, _ = model(test_inputs)
             predictions_test.append(test_outputs.numpy())
 

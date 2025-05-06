@@ -11,6 +11,7 @@ from experiments.accuracy import evaluate_cosfire_accuracy
 from experiments.hamming_weight import calculate_average_hamming_weight
 from experiments.sparsity_ratio import calculate_average_sparsity_ratio
 from experiments.sparsity_distribution import visualize_sparsity_distribution
+from experiments.hashing_time import calculate_hashing_and_inference_times
 from experiments.utils import binarize_cosfire_predictions
 from experiments.utils import binarize_densenet_predictions
 from experiments.utils import generate_binary_file
@@ -59,7 +60,7 @@ def accuracy(model_name):
     if model_type == 'cosfire':
 
         model = load_cosfire_model(
-            name=model_weights_filename, bitsize=bitsize, l1_reg=1e-08, l2_reg=1e-08
+            name = model_weights_filename, bitsize=bitsize, l1_reg=1e-08, l2_reg=1e-08
         )
         mAP, threshold_max_mAP, predictions = evaluate_cosfire_accuracy(
             model, cosfire_data
@@ -102,6 +103,28 @@ def sparsity_ratio(model_name):
     print("Sparsity Ratio:", average_sparsity_ratio)
     print("---------------------------------------")
 
+
+# -------------------------------------
+# EXPERIMENT 5 & 6: Hashing Time & Inference Time 
+# -------------------------------------
+
+def efficiency_analysis(model_name):
+    
+    # Get params from model name string
+    slices = model_name.split('_')
+    bitsize = int(slices[1].replace('bit', ''))
+    model_weights_filename = model_name + '.pth'
+
+    model = load_cosfire_model(
+            name = model_weights_filename, bitsize=bitsize, l1_reg=1e-08, l2_reg=1e-08
+        )
+    
+    avg_hashing_time, std_dev_hashing_time = calculate_hashing_and_inference_times(model, cosfire_data)
+    
+    if avg_hashing_time is not None:
+        print(f"Final Average Hashing Time per Image: {avg_hashing_time:.8f} seconds")
+        print(f"Standard Deviation across runs:       {std_dev_hashing_time:.8f} seconds")
+    
 
 # -------------------------------------
 # EXPERIMENT 9: Data Compression 
@@ -188,6 +211,12 @@ if __name__ == "__main__":
         "compression_method", type=str, help="The name of the compression method to apply ('rle', 'huffman' or 'zlib')"
     )
 
+    # Subparser for the hashing time experiments
+    accuracy_parser = subparsers.add_parser("hashing-time")
+    accuracy_parser.add_argument(
+        "model_name", type=str, help="The name of the model weights pth file"
+    )
+
     args = parser.parse_args()
 
     if args.command == 'accuracy':
@@ -209,3 +238,6 @@ if __name__ == "__main__":
         print_entropy(args.binary_filename)
     elif args.command == 'compress':
         print_compression_ratio(args.binary_filename, args.compression_method)
+    elif args.command == 'efficiency-analysis':
+        efficiency_analysis(args.model_name)
+    
