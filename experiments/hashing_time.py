@@ -13,22 +13,19 @@ dic_labels = {
     'Compact':3,
 }
 
-def calculate_hashing_and_inference_times(model, data, device='cuda'):
+def calculate_average_hashing_time(model, data, device='cuda'):
     """
-    Runs experiments to measure Hashing Time (Experiment 5) and
-    Inference Time for hash generation (Experiment 6).
-    For these models, these two times measure the same core operation.
+    Runs the hashing time experiment on the given cosfire model and data.
 
     Args:
-        model: The trained PyTorch model to evaluate.
-        data_module: The data module object containing the Dataset class
-                     (e.g., data_module.CosfireDataset).
-        device (str): The device to run the model on ('cuda' or 'cpu').
+        model: The model to evaluate.
+        data: The data module containing the datasets.
+        device (str): The device to run the model on ('cuda' or 'cpu')
 
     Returns:
-        tuple: (avg_hashing_time, std_hashing_time,
-                avg_inference_time, std_inference_time)
-               All times are per image in seconds.
+        tuple: (average_hashing_time_per_image, std_dev_hashing_time)
+               average_hashing_time_per_image (float): Avg time in seconds.
+               std_dev_hashing_time (float): Standard deviation across runs.
     """
     
     # Set model to evaluation mode
@@ -51,7 +48,7 @@ def calculate_hashing_and_inference_times(model, data, device='cuda'):
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     num_images = len(test_dataset)
 
-    # --- Time Measurement for Forward Pass (used for both Hashing & Inference) ---
+    # --- Hashing Time Measurement ---
 
     num_runs = 7 # Number of times to repeat the experiment for averaging
     num_warmup = 3 # Number of initial runs to discard for warm-up

@@ -11,7 +11,7 @@ from experiments.accuracy import evaluate_cosfire_accuracy
 from experiments.hamming_weight import calculate_average_hamming_weight
 from experiments.sparsity_ratio import calculate_average_sparsity_ratio
 from experiments.sparsity_distribution import visualize_sparsity_distribution
-from experiments.hashing_time import calculate_hashing_and_inference_times
+from experiments.hashing_time import calculate_average_hashing_time
 from experiments.utils import binarize_cosfire_predictions
 from experiments.utils import binarize_densenet_predictions
 from experiments.utils import generate_binary_file
@@ -105,10 +105,10 @@ def sparsity_ratio(model_name):
 
 
 # -------------------------------------
-# EXPERIMENT 5 & 6: Hashing Time & Inference Time 
+# EXPERIMENT 5: Hashing Time  
 # -------------------------------------
 
-def efficiency_analysis(model_name):
+def hashing_time(model_name):
     
     # Get params from model name string
     slices = model_name.split('_')
@@ -119,7 +119,7 @@ def efficiency_analysis(model_name):
             name = model_weights_filename, bitsize=bitsize, l1_reg=1e-08, l2_reg=1e-08
         )
     
-    avg_hashing_time, std_dev_hashing_time = calculate_hashing_and_inference_times(model, cosfire_data)
+    avg_hashing_time, std_dev_hashing_time = calculate_average_hashing_time(model, cosfire_data)
     
     if avg_hashing_time is not None:
         print(f"Final Average Hashing Time per Image: {avg_hashing_time:.8f} seconds")
@@ -238,6 +238,6 @@ if __name__ == "__main__":
         print_entropy(args.binary_filename)
     elif args.command == 'compress':
         print_compression_ratio(args.binary_filename, args.compression_method)
-    elif args.command == 'efficiency-analysis':
-        efficiency_analysis(args.model_name)
+    elif args.command == 'hashing-time':
+        hashing_time(args.model_name)
     
