@@ -5,10 +5,10 @@ import seaborn as sns
 figures_dir = './figures/'
 
 # Colors config
-cosfire_dark = '#edbf33'
-cosfire_light = '#ef9b20'
-densenet_dark = '#87bc45'
-densenet_light = '#bdcf32'
+cosfire_72 = '#edbf33'
+cosfire_48 = '#ef9b20'
+densenet_72 = '#87bc45'
+densenet_56 = '#bdcf32'
 neutral_yellow = '#ede15b'
 
 # mAP vs Accuracy plot
@@ -22,7 +22,7 @@ sns.set_style("whitegrid")
 
 # Create the plot
 plt.figure(figsize=(10, 6))  # Adjust figure size as needed
-plt.plot(bitsizes, cosfire_map_values, marker='o', linestyle='-', color=cosfire_dark, label='COSFIRE')
+plt.plot(bitsizes, cosfire_map_values, marker='o', linestyle='-', color=cosfire_72, label='COSFIRE')
 plt.plot(bitsizes, densenet_map_values, marker='s', linestyle='-', color=densenet_dark, label='DenseNet')
 
 # Add labels and title
